@@ -12,7 +12,7 @@ sqlp.Conn, err = sqlp.CreateConnection(sqlp.CTX, "postgres", "pass", "localhost:
 ``` 
 Заменить значения ```postgres``` - ваш username, ```pass``` - ваш пароль, ```localhost:5432``` - ip адрес базы данных, ```postgres``` - имя базы данных.
 
-В том же файле в  ???????? строке:
+В том же файле в 27 строке:
 ```go
 if err := http.ListenAndServe(":8080", nil); err != nil {
 ```
