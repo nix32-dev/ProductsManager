@@ -1,30 +1,23 @@
 package main
 
 import (
-	"fmt"
-	pgse "mainMod/projectFiles"
-	sqlp "mainMod/projectFiles/sql"
-	"net/http"
+	"log/slog"
+	initf "mainMod/projectFiles/initFunc"
 )
 
 func main() {
-	var err error
-	sqlp.Conn, err = sqlp.CreateConnection(sqlp.CTX, "postgres", "pass", "localhost:5432", "postgres") // Подключаемся к базе данных | Введите ваш: user, password, ip, db name
-	if err != nil {
-		fmt.Println("Ошибка: | Error: ", err)
+	initf.CreateLogger()
+
+	if err := initf.Getenv(); err != nil { // Импортируем переменные из .env
+		slog.Error("ERROR:", err)
 		return
 	}
-	if err := sqlp.CreateTable(sqlp.CTX, sqlp.Conn); err != nil { // Создаем таблицу в базе данных
-		fmt.Println("Ошибка: | Error: ", err)
+	if err := initf.ConnectAndCreate(); err != nil { // Создаем подключение к базе данных и таблицу в ней
+		slog.Error("ERROR:", err)
+		return
 	}
-
-	http.HandleFunc("/create", pgse.CreateProductH)
-	http.HandleFunc("/change", pgse.ChangeProductH)
-	http.HandleFunc("/delete", pgse.DeleteProductH)
-	http.HandleFunc("/", pgse.GetProductH)
-
-	fmt.Println("Старт!") // Индикация старта сервера в консоль
-	if err := http.ListenAndServe(":8080", nil); err != nil {
-		fmt.Println("Ошибка: ", err) // Проверка на ошибки, их вывод
+	if err := initf.StartHTTP(); err != nil { // Создаем хендлеры и запускаем HTTP сервер
+		slog.Error("ERROR:", err)
+		return
 	}
 }

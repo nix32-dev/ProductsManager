@@ -11,11 +11,9 @@ import (
 
 var CTX context.Context = context.Background()
 var Conn *pgx.Conn
-var db string
 
-func CreateConnection(ctx context.Context, name string, password string, ip string, database string) (*pgx.Conn, error) {
-	db = database
-	connect, err := pgx.Connect(ctx, "postgres://"+name+":"+password+"@"+ip+"/"+database) // Подключаемся к базе данных
+func CreateConnection(ctx context.Context, connection string) (*pgx.Conn, error) {
+	connect, err := pgx.Connect(ctx, connection) // Подключаемся к базе данных
 	if err != nil {
 		return nil, err
 	}
@@ -135,6 +133,7 @@ func GetProduct(ctx context.Context, conn *pgx.Conn, pageR string) ([]ProductSQL
 	if err != nil {
 		return nil, err
 	}
+	page -= 1
 	page *= 10
 	sqlRequest := `
 	SELECT id, name, description, price, quantity, created_at FROM products

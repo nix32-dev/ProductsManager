@@ -2,7 +2,7 @@ package pgse
 
 import (
 	"encoding/json"
-	"fmt"
+	"log/slog"
 	sqlp "mainMod/projectFiles/sql"
 	"net/http"
 	"strconv"
@@ -10,6 +10,7 @@ import (
 
 func CreateProductH(w http.ResponseWriter, r *http.Request) { // Хендлер создания продукта
 	if r.Method != http.MethodPost { // Проверка на метод подключения
+		slog.Error("ERROR:", sqlp.WrongRequestMethod, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(sqlp.WrongRequestMethod.Error()))
 		return
@@ -18,14 +19,14 @@ func CreateProductH(w http.ResponseWriter, r *http.Request) { // Хендлер 
 	var input sqlp.ProductSQL // Создаем переменную для входных данных
 
 	if err := json.NewDecoder(r.Body).Decode(&input); err != nil { // Декодируем входящий JSON
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
 	if err := sqlp.ValidateALL(input.Name, input.Description, input.Price, input.Quantity); err != nil { // Делаем валидацию всех входящих значений
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
@@ -33,7 +34,7 @@ func CreateProductH(w http.ResponseWriter, r *http.Request) { // Хендлер 
 
 	outputR, err := sqlp.CreateProduct(sqlp.CTX, sqlp.Conn, input.Name, input.Description, input.Price, input.Quantity) // Создаем продукт
 	if err != nil {
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -41,7 +42,7 @@ func CreateProductH(w http.ResponseWriter, r *http.Request) { // Хендлер 
 
 	output, err := json.Marshal(outputR) // Запаковываем созданный продукт в JSON-ответ
 	if err != nil {
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -53,7 +54,7 @@ func CreateProductH(w http.ResponseWriter, r *http.Request) { // Хендлер 
 
 func ChangeProductH(w http.ResponseWriter, r *http.Request) { // Хендлер изменения продукта
 	if r.Method != http.MethodPatch { // Проверка на метод подключения
-		fmt.Println("Ошибка: | Error: ", sqlp.WrongRequestMethod)
+		slog.Error("ERROR:", sqlp.WrongRequestMethod, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(sqlp.WrongRequestMethod.Error()))
 		return
@@ -63,7 +64,7 @@ func ChangeProductH(w http.ResponseWriter, r *http.Request) { // Хендлер 
 	idR, key, value := querry.Get("id"), querry.Get("key"), querry.Get("value") // Получаем querry параметры из запроса
 	id, err := strconv.Atoi(idR)                                                // Переводим ID в int для корректного запроса
 	if err != nil {
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -71,26 +72,26 @@ func ChangeProductH(w http.ResponseWriter, r *http.Request) { // Хендлер 
 
 	check, err := sqlp.CheckIdExists(id, sqlp.Conn, sqlp.CTX) // Проверяем на существование продукта
 	if err != nil {
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
 	if check == false {
-		fmt.Println("Ошибка: | Error: ", sqlp.NotExists)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(sqlp.NotExists.Error()))
 		return
 	}
 	if err := sqlp.ValidateKeyValue(key, value); err != nil { // Проверяем значения на замену
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
 	}
 
 	if err := sqlp.ChangeProduct(sqlp.CTX, sqlp.Conn, id, key, value); err != nil { // Изменяем продукт через функцию
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -101,7 +102,7 @@ func ChangeProductH(w http.ResponseWriter, r *http.Request) { // Хендлер 
 
 func DeleteProductH(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete { // Проверяем метод подключения
-		fmt.Println("Ошибка: | Error: ", sqlp.WrongRequestMethod)
+		slog.Error("ERROR:", sqlp.WrongRequestMethod, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(sqlp.WrongRequestMethod.Error()))
 		return
@@ -110,7 +111,7 @@ func DeleteProductH(w http.ResponseWriter, r *http.Request) {
 	idR := r.URL.Query().Get("id") // Получение querry параметра
 
 	if idR == "" { // Проверка на то, пустой ли querry параметр
-		fmt.Println("Ошибка: | Error: ", sqlp.NotExists)
+		slog.Error("ERROR:", sqlp.NotExists, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(sqlp.NotExists.Error()))
 		return
@@ -118,7 +119,7 @@ func DeleteProductH(w http.ResponseWriter, r *http.Request) {
 
 	id, err := strconv.Atoi(idR) // Переводим querry параметр в int
 	if err != nil {
-		fmt.Println("Ошибка: | Error: ", sqlp.WrongRequestMethod)
+		slog.Error("ERROR:", sqlp.WrongRequestMethod, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(err.Error()))
 		return
@@ -126,20 +127,20 @@ func DeleteProductH(w http.ResponseWriter, r *http.Request) {
 
 	check, err := sqlp.CheckIdExists(id, sqlp.Conn, sqlp.CTX) // Проверяем на существование продукта
 	if err != nil {
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
 	}
 	if !check {
-		fmt.Println("Ошибка: | Error: ", sqlp.NotExists)
+		slog.Error("ERROR:", sqlp.NotExists, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(sqlp.NotExists.Error()))
 		return
 	}
 
 	if err := sqlp.DeleteProduct(sqlp.CTX, sqlp.Conn, id); err != nil { // Удаляем продукт через функцию
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -150,7 +151,7 @@ func DeleteProductH(w http.ResponseWriter, r *http.Request) {
 
 func GetProductH(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet { // Проверяем метод подключения
-		fmt.Println("Ошибка: | Error: ", sqlp.WrongRequestMethod)
+		slog.Error("ERROR:", sqlp.WrongRequestMethod, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(sqlp.WrongRequestMethod.Error()))
 		return
@@ -158,7 +159,7 @@ func GetProductH(w http.ResponseWriter, r *http.Request) {
 
 	page := r.URL.Query().Get("page")
 	if page == "" { // Получаем страницу с querry запроса
-		fmt.Println("Ошибка: | Error: ", sqlp.WrongPage)
+		slog.Error("ERROR:", sqlp.WrongPage, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusBadRequest)
 		w.Write([]byte(sqlp.WrongPage.Error()))
 		return
@@ -166,7 +167,7 @@ func GetProductH(w http.ResponseWriter, r *http.Request) {
 
 	products, err := sqlp.GetProduct(sqlp.CTX, sqlp.Conn, page)
 	if err != nil { // Создаем ответный слайс
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
@@ -174,7 +175,7 @@ func GetProductH(w http.ResponseWriter, r *http.Request) {
 
 	output, err := json.Marshal(products)
 	if err != nil { // Запихиваем ответный слайс в JSON
-		fmt.Println("Ошибка: | Error: ", err)
+		slog.Error("ERROR:", err, "METHOD:", r.Method, "PATH:", r.URL.Path)
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Write([]byte(err.Error()))
 		return
